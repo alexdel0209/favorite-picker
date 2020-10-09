@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0">
+<title>Picker</title>
+<style>
+body {
+    background:#F4c2c2;
+    color:#b57edc;
+    font-family:veranda, sans-serif;
+    font-size:10pt;
+    margin:0;
+    padding:10px;
+}
+
+a:link, a:visited {
+    color:#008;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+a:active, a:hover {
+    color:#E6E6FA;
+}
+
+.info {
+    font-weight:bold;
+}
+
+button {
+    font-family:inherit;
+    cursor:pointer;
+    border:0;
+    border-radius:3px;
+    padding:0.3em 0.5em;
+    background:#CCC;
+    color:#000;
+}
+
+button:hover {
+    background:#DDD;
+}
+
+button.disabled {
+    background:#DDD;
+    color:#888;
+    cursor:not-allowed;
+}
+
+button.disabled:hover {
+    background:#DDD;
+}
+
+#container {
+    position:relative;
+    margin-left:-10px;
+    margin-right:-10px;
+    padding:10px;
+    overflow:hidden;
+}
+
+@media (min-width:1024px) {
+    /* Put the found favorites beside the picking div when the window is sufficiently large */
+    #picking {
+        float:left;
+        width:636px;
+    }
+
+    #secondary {
+        margin-left:646px;
+    }
+}
+
+@media (min-width:1300px) {
+    /* Once we get to the point where 636px is less than half of the width of the screen, make the picking div just take up half */
+    #picking {
+        width:50%;
+    }
+
+    #secondary {
+        margin-left:51%;
+    }
+}
+
+#pick {
+    background:#CFFFE5;
+    color:#B57EDC;
+    font-size:larger;
+    font-weight:bold;
+    width:6em;
+    border-radius:5px;
+    margin-right:10px;
+}
+
+#pick.disabled {
+    background:#ACF;
+}
+
+#pick:hover {
+    background:#ACF;
+}
+
+.item-list {
+    padding:0;
+    list-style-type:none;
+    line-height:100px;
+}
+
+.item-list li {
+    margin:0;
+    display:inline-block;
+    height:150px;
+    width:150px;
+    line-height:100px;
+    border:3px solid transparent;
+    text-align:center;
+    position:relative;
+    vertical-align:top;
+    overflow:hidden;
+    border-radius:100%;
+    background:#CFFFE5;
+    color:#000;
+}
+
+.item-list li img {
+    vertical-align:middle;
+    max-height:100%;
+    max-width:100%;
+}
+
+.item-list li span {
+    display:inline-block;
+    vertical-align:middle;
+    line-height:1.2;
+}
+
+@media (max-width:636px) {
+    .item-list {
+        line-height:75px;
+    }
+
+    .item-list li {
+        line-height:75px;
+        height:75px;
+        width:75px;
+    }
+}
+
+@media (max-width:423px) {
+    .item-list {
+        line-height:50px;
+    }
+
+    .item-list li {
+        line-height:50px;
+        height:50px;
+        width:50px;
+    }
+}
+
+#evaluating li {
+    cursor:pointer;
+}
+
+#favorites li {
+    cursor:move;
+}
+
+.item-list li:hover {
+    background:#CDF;
+}
+
+.item-list.sorting li:hover {
+    background:#000;
+}
+
+#evaluating li.selected {
+    border:3px solid #7AC;
+}
+
+#evaluating, #buttons {
+    text-align:center;
+    margin:auto;
+}
+
+#evaluating li.notice {
+    width:auto;
+    height:auto;
+    max-width:260px;
+    margin:auto;
+    background:#c2c2f4;
+    border-radius:10px;
+    padding:30px 30px;
+    color:#000;
+    text-align:center;
+    line-height:1.4;
+    cursor:auto;
+    font-size:10pt;
+}
+
+#buttons {
+    margin-top:30px;
+    position:relative;
+    z-index:3;
+}
+</style>
+</head>
+<body>
+<h1>Cartoon Female Picker</h1>
+
+<p>.</p>
+
+<div id="container">
+
+<div id="picking">
+<ul id="evaluating" class="item-list">
+</ul>
+
+<p id="buttons"><button id="pick">Pick</button> <button id="pass">Pass</button> <button id="undo">Undo</button> <button id="redo">Redo</button></p>
+</div>
+
+<div id="secondary">
+<h2>Found favorites</h2>
+
+<ol id="favorites" class="item-list">
+</ol>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="picker.js"></script>
+<script src="picker-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.7.0/Sortable.min.js"></script>
+<script>
+'use strict';
+
+var items = [
+    {id: 'Lucina', name: 'Lucina', image: 'FEWA_Lucina.png'},
+    {id: 'Harley Quinn', name: 'Harley Quinn', image: 'HarleyQ.png'},
+    {id: 'Peach', name: 'Princess Peach', image: 'Peach.png'},
+    {id: 'Zelda', name: 'Princess Zelda', image: 'Zelda.png'},
+    {id: 'Samus', name: 'Samus Aran', image: 'samus.png'},
+    {id: 'Katara', name: 'Katara', image: 'Katara.png'},
+    {id: 'Blossom', name: 'Blossom', image: 'Blossom.png'},
+    {id: 'Misty', name: 'Misty', image: 'Misty.png'},
+    {id: 'Palutena', name: 'Palutena', image: 'Palutena.png'},
+    {id: 'Marceline', name: 'Marceline Abadeer', image: 'Marceline.png'},
+    {id: 'Star', name: 'Star Butterfly', image: 'Star.png'},
+    {id: 'Daisy', name: 'Princess Daisy', image: 'Daisy.png'},
+    {id: 'Poison Ivy', name: 'Poison Ivy', image: 'PoisonIvyy.png'},
+    {id: 'Rosalina', name: 'Rosalina', image: 'Rosalina.png'},
+    {id: 'Azula', name: 'Azula', image: 'Azula.png'},
+    {id: 'Toph', name: 'Toph', image: 'Toph.png'},
+    {id: 'Catwoman', name: 'Catwoman', image: 'Catwoman.png'},
+    {id: 'Isabelle', name: 'Isabelle', image: 'Isabelle.png'},
+    {id: 'Bayonetta', name: 'Bayonetta', image: 'Bayoneta.png'},
+    {id: 'Rem', name: 'Rem', image: 'Rem.png'},
+    {id: 'Ram', name: 'Ram', image: 'Ram.png'},
+    {id: 'Uraraka', name: 'Ochaco Uraraka', image: 'Uraraka.png'},
+    {id: 'Wonder Woman', name: 'Wonder Woman', image: 'WonderWoman.png'},
+    {id: 'Bubblegum', name: 'Princess Bubblegum', image: 'Bubblegum.png'},
+    {id: 'Buttercup', name: 'Buttercup', image: 'Buttercup.png'},
+    {id: 'Bubbles', name: 'Bubbles', image: 'Bubbles.png'},
+    {id: 'Ann', name: 'Ann Takamaki', image: 'Ann.png'},
+    {id: 'Junko', name: 'Junko Enoshima', image: 'Junko.png'},
+    {id: 'MinMin', name: 'MinMin', image: 'MinMin.png'},
+    {id: 'Neo', name: 'Neo Politan', image: 'Neo.png'},
+    {id: 'Ruby', name: 'Ruby', image: 'Ruby.png'},
+    {id: 'Amy', name: 'Amy Rose', image: 'Amy.png'},
+    {id: 'Nicole', name: 'Nicole Watterson', image: 'Nicole.png'},
+    {id: 'Sakura', name: 'Sakura Haruno', image: 'Sakura.png'},
+    {id: 'azura', name: 'azura', image: 'azura.png'},
+    {id: 'Ty Lee', name: 'Ty Lee', image: 'TyLee.png'},
+    {id: 'Futaba', name: 'Futaba', image: 'Futaba.png'}
+]
+var myPicker = new picker.Picker({
+    items: items,
+    localStorageKey: 'picker-state',
+    defaultSettings: {
+        minBatchSize: 4,
+        maxBatchSize: 10
+    }
+
+});
+
+var pickerUI = new PickerUI(myPicker, {
+    elements: {
+        pick: "#pick",
+        pass: "#pass",
+        undo: "#undo",
+        redo: "#redo",
+        evaluating: "#evaluating",
+        favorites: "#favorites"
+    }
+});
+
+pickerUI.initialize();
+
+/* Sortable favorites - you can safely remove this, and the Sortable.min.js script, if you don't want to be able to sort your favorite list. */
+var sortable = new Sortable(pickerUI.elem.favorites.get(0), {
+    draggable: '.item',
+    animation: 100,
+    onStart: function() {
+        pickerUI.elem.favorites.addClass("sorting");
+    },
+    onEnd: function() {
+        pickerUI.elem.favorites.removeClass("sorting");
+    },
+    onUpdate: function() {
+        myPicker.setFavorites(pickerUI.elem.favorites.children().map(function() {
+            return pickerUI.getItem(this);
+        }).get());
+        pickerUI.update(true);
+    }
+});
+/* End sortable favorites */
+</script>
+</body>
+</html>
